@@ -5,6 +5,7 @@ import time
 import os
 import statistics
 import concurrent.futures
+import threading
 import numpy as np
 import sounddevice as sd
 #from scipy.io.wavfile import write
@@ -32,8 +33,8 @@ def main():
 
     config = configs.EnvelopeServiceConfig()
     config.sensor = args.sensors
-    config.range_interval = [0.3, 0.5]
-    config.update_rate = 5
+    config.range_interval = [0.3, 0.7]
+    config.update_rate = 10
 
     session_info = client.setup_session(config)
     print("Session info:\n", session_info, "\n")
@@ -61,12 +62,26 @@ def main():
             f1 = executor.submit(data_handler, info, data)
             f2 = executor.submit(tune_player)
             #print(f1.result(), f2.result())'''
-    
+    '''t1 = threading.Thread(target=runner, args=[client])
+    t2 = threading.Thread(target=tune_player)
+    t1.start()
+    t2.start()'''
+        
     while not interrupt_handler.got_signal:
-        with concurrent.futures.ProcessPoolExecutor() as executor:
+        '''with concurrent.futures.ProcessPoolExecutor() as executor:
             print("HI 1")
             f1 = executor.submit(runner, client)
-            f2 = executor.submit(tune_player)
+            f2 = executor.submit(tune_player)'''
+        
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            t1 = executor.submit(runner, client)
+            t2 = executor.submit(tune_player)
+        
+        #t1.join()
+        #t2.join()
+    
+    #t1.join()
+    #t2.join()
 
     print("Disconnecting...")
     client.disconnect()
@@ -80,6 +95,8 @@ def runner(client):
     global mean_data 
     mean_data = statistics.mean(data)
     print(info, "\n", data, "\n", mean_data)
+    # tänk över vad mean är...
+    
 
 def data_handler(info,data):
     more = True
@@ -93,7 +110,7 @@ def tune_player():
         freq_hz = 640.0
     else:
         freq_hz = 440.0
-    duration_s = 0.4
+    duration_s = 1.0
     
     each_sample_number = np.arange(duration_s*sps)
     waveform = 0.1 * np.sin(2*np.pi*each_sample_number*freq_hz/sps)
