@@ -77,8 +77,9 @@ more = True
 def runner(client):
     print("HI 2")
     info, data = client.get_next()
+    global mean_data 
     mean_data = statistics.mean(data)
-    print(info, "\n", data, "\n")
+    print(info, "\n", data, "\n", mean_data)
 
 def data_handler(info,data):
     more = True
@@ -92,10 +93,10 @@ def tune_player():
         freq_hz = 640.0
     else:
         freq_hz = 440.0
-    duration_s = 2.0
+    duration_s = 0.4
     
     each_sample_number = np.arange(duration_s*sps)
-    waveform = np.sin(2*np.pi*each_sample_number*freq_hz/sps)
+    waveform = 0.1 * np.sin(2*np.pi*each_sample_number*freq_hz/sps)
     print("HI tune")
     sd.play(waveform,sps)
     time.sleep(duration_s)
