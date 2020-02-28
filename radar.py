@@ -55,66 +55,55 @@ def main():
     # KeyboardInterrupt which hopefully terminates the script.
     interrupt_handler = utils.ExampleInterruptHandler()
     print("Press Ctrl-C to end session\n")
-    
-    '''while not interrupt_handler.got_signal:
-        info, data = client.get_next()
-        with concurrent.futures.ProcessPoolExecutor() as executor:
-            f1 = executor.submit(data_handler, info, data)
-            f2 = executor.submit(tune_player)
-            #print(f1.result(), f2.result())'''
-    '''t1 = threading.Thread(target=runner, args=[client])
-    t2 = threading.Thread(target=tune_player)
-    t1.start()
-    t2.start()'''
         
-    while not interrupt_handler.got_signal:
-        '''with concurrent.futures.ProcessPoolExecutor() as executor:
+    #while not interrupt_handler.got_signal:
+    '''with concurrent.futures.ProcessPoolExecutor() as executor:
             print("HI 1")
             f1 = executor.submit(runner, client)
             f2 = executor.submit(tune_player)'''
         
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            t1 = executor.submit(runner, client)
-            t2 = executor.submit(tune_player)
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        t1 = executor.submit(runner, client, interrupt_handler)
+        t2 = executor.submit(tune_player, interrupt_handler)
+            
+        print(t1.result(), t2.result())
+        
     
-    #t1.join()
-    #t2.join()
+    t1.join()
+    t2.join()
 
     print("Disconnecting...")
     client.disconnect()
 
 mean_data = 0
-more = True
 
-def runner(client):
-    print("HI 2")
-    info, data = client.get_next()
-    global mean_data 
-    mean_data = statistics.mean(data)
-    print(info, "\n", data, "\n", mean_data)
-    # tänk över vad mean är...
-    
-
-def data_handler(info,data):
-    more = True
-    mean_data = statistics.mean(data)
-    print(info, "\n", data, "\n", mean_data, "\n", more)
+def runner(client, interrupt_handler2):
+    while not interrupt_handler2.got_signal:
+        info, data = client.get_next()
+        global mean_data 
+        #mean_data = getX(0.3,0.0004843111091759056,data)
+        mean_data = statistics.mean(data)
         
-def tune_player():
-    print("HI tune")
-    sps = 44100.0
-    if mean_data > 100:
-        freq_hz = 640.0
-    else:
-        freq_hz = 440.0
-    duration_s = 1.0
-    
-    each_sample_number = np.arange(duration_s*sps)
-    waveform = 0.1 * np.sin(2*np.pi*each_sample_number*freq_hz/sps)
-    print("HI tune")
-    sd.play(waveform,sps)
-    time.sleep(duration_s)
-    print("DONEEEEE \n", mean_data)
+        #print(info, "\n", data, "\n", mean_data)
+        print(mean_data)
+
+        
+def tune_player(interrupt_handler2):
+    while not interrupt_handler2.got_signal:
+        sps = 44100.0
+        if mean_data > 140:
+            freq_hz = 1740.0
+        elif mean_data > 100 and mean_data < 140:
+            freq_hz = 880.0
+        else:
+            freq_hz = 440.0
+        duration_s = 1
+        
+        each_sample_number = np.arange(duration_s*sps)
+        waveform = 0.1 * np.sin(2*np.pi*each_sample_number*freq_hz/sps)
+        sd.play(waveform,sps)
+        time.sleep(duration_s)
+        print(mean_data)
 
 
 if __name__ == "__main__":
