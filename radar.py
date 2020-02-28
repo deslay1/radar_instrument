@@ -7,9 +7,9 @@ import statistics
 import concurrent.futures
 import threading
 import numpy as np
-import sounddevice as sd
+from sound import sound_generate
 #from scipy.io.wavfile import write
-file = "/home/pi/Downloads/acconeer-python-exploration-master/audio/sound7.mp3"
+#file = "/home/pi/Downloads/acconeer-python-exploration-master/audio/sound7.mp3"
 # os.system("omxplayer " + file)
 
 def main():
@@ -34,7 +34,7 @@ def main():
     config = configs.EnvelopeServiceConfig()
     config.sensor = args.sensors
     config.range_interval = [0.3, 0.7]
-    config.update_rate = 10
+    config.update_rate = 50
 
     session_info = client.setup_session(config)
     print("Session info:\n", session_info, "\n")
@@ -56,19 +56,21 @@ def main():
     interrupt_handler = utils.ExampleInterruptHandler()
     print("Press Ctrl-C to end session\n")
         
-    #while not interrupt_handler.got_signal:
-    '''with concurrent.futures.ProcessPoolExecutor() as executor:
+    '''while not interrupt_handler.got_signal:
+    with concurrent.futures.ProcessPoolExecutor() as executor:
             print("HI 1")
             f1 = executor.submit(runner, client)
             f2 = executor.submit(tune_player)'''
-        
+    # Here we make use of multithreading to run the data collection and
+    # sound generation separately. the intrerrupt_handler is passed in
+    # so that the threads are both stopped when a user hits Ctrl-C.   
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        t1 = executor.submit(runner, client, interrupt_handler)
+        t1 = executor.submit(data_handler, client, interrupt_handler)
         t2 = executor.submit(tune_player, interrupt_handler)
             
         print(t1.result(), t2.result())
-        
     
+    # Threads close after script terminates.
     t1.join()
     t2.join()
 
@@ -77,7 +79,8 @@ def main():
 
 mean_data = 0
 
-def runner(client, interrupt_handler2):
+# data handler 
+def data_handler(client, interrupt_handler2):
     while not interrupt_handler2.got_signal:
         info, data = client.get_next()
         global mean_data 
@@ -90,19 +93,7 @@ def runner(client, interrupt_handler2):
         
 def tune_player(interrupt_handler2):
     while not interrupt_handler2.got_signal:
-        sps = 44100.0
-        if mean_data > 140:
-            freq_hz = 1740.0
-        elif mean_data > 100 and mean_data < 140:
-            freq_hz = 880.0
-        else:
-            freq_hz = 440.0
-        duration_s = 1
-        
-        each_sample_number = np.arange(duration_s*sps)
-        waveform = 0.1 * np.sin(2*np.pi*each_sample_number*freq_hz/sps)
-        sd.play(waveform,sps)
-        time.sleep(duration_s)
+        sound_generate(mean_data)
         print(mean_data)
 
 
