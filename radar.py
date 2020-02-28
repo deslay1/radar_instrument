@@ -122,3 +122,11 @@ def tune_player():
 
 if __name__ == "__main__":
     main()
+#Interpolerar hastighet från två avståndsvärden, föregående(x1)(t2) och senaste(x1)(t1) 
+def fastV(x1,x2,t1,t2):
+	return (x2-x1)/(t2-t1)
+#returnerar det faktiska avståndet till detekterat föremål (förutsätter numpy)
+def getX(minRange, rangeInterval,data):
+	return np.argmax(data)*rangeInterval + minRange
+
+
