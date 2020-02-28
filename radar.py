@@ -76,9 +76,6 @@ def main():
         with concurrent.futures.ThreadPoolExecutor() as executor:
             t1 = executor.submit(runner, client)
             t2 = executor.submit(tune_player)
-        
-        #t1.join()
-        #t2.join()
     
     #t1.join()
     #t2.join()
