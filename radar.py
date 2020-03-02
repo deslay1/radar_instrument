@@ -41,7 +41,6 @@ def main():
     print("Session info:\n", session_info, "\n")
 
     # Now would be the time to set up plotting, signal processing, etc.
-    #sound_initiate()
     
 
     client.start_session()
@@ -89,6 +88,7 @@ def main():
         # Wait for processes to terminate before moving on
         p1.join()
         p2.join()
+        p3.join()
 
     print("Disconnecting...")
     client.disconnect()
