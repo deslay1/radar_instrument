@@ -5,9 +5,10 @@ import time
 import os
 import statistics
 import concurrent.futures
+import multiprocessing
 import threading
 import numpy as np
-from sound import sound_generate
+from sound import *
 #from scipy.io.wavfile import write
 #file = "/home/pi/Downloads/acconeer-python-exploration-master/audio/sound7.mp3"
 # os.system("omxplayer " + file)
@@ -40,7 +41,7 @@ def main():
     print("Session info:\n", session_info, "\n")
 
     # Now would be the time to set up plotting, signal processing, etc.
-    
+    #sound_initiate()
     
 
     client.start_session()
@@ -61,9 +62,8 @@ def main():
             print("HI 1")
             f1 = executor.submit(runner, client)
             f2 = executor.submit(tune_player)'''
-    # Here we make use of multithreading to run the data collection and
-    # sound generation separately. the intrerrupt_handler is passed in
-    # so that the threads are both stopped when a user hits Ctrl-C.   
+            
+    '''  
     with concurrent.futures.ThreadPoolExecutor() as executor:
         t1 = executor.submit(data_handler, client, interrupt_handler)
         t2 = executor.submit(tune_player, interrupt_handler)
@@ -72,29 +72,56 @@ def main():
     
     # Threads close after script terminates.
     t1.join()
-    t2.join()
+    t2.join()'''
+    # Here we make use of multiprocessing to run the data collection and
+    # sound generation separately. the intrerrupt_handler is passed in
+    # so that the threads are both stopped when a user hits Ctrl-C. 
+    with multiprocessing.Manager() as manager:
+        shared_value = manager.Value('d', 0)   # Shared value between processes
+        shared_freq = manager.Value('d', 0)
+        p1 = multiprocessing.Process(target=data_handler, args=(client, interrupt_handler, shared_value))
+        p2 = multiprocessing.Process(target=tune_player, args=(interrupt_handler, shared_value, shared_freq))
+        p3 = multiprocessing.Process(target=plotter, args=(interrupt_handler, shared_freq))
+        p1.start()
+        p2.start()
+        p3.start()
+        
+        # Wait for processes to terminate before moving on
+        p1.join()
+        p2.join()
 
     print("Disconnecting...")
     client.disconnect()
 
-mean_data = 0
-
-# data handler 
-def data_handler(client, interrupt_handler2):
-    while not interrupt_handler2.got_signal:
+# Function for data processing. The shared value is currently set to the
+# mean of the data feedback from the radar sensor. 
+def data_handler(client, interrupt_handler, shared_value):
+    while not interrupt_handler.got_signal:
         info, data = client.get_next()
-        global mean_data 
-        #mean_data = getX(0.3,0.0004843111091759056,data)
-        mean_data = statistics.mean(data)
         
-        #print(info, "\n", data, "\n", mean_data)
-        print(mean_data)
+        shared_value.value = statistics.mean(data)
+        
+        print(shared_value.value)
 
+# Function for playing different tunes according to how far away our
+# obstacle is from the sensor. Sound_generate() is called from sound.py
+def tune_player(interrupt_handler, shared_value, shared_freq):
+    while not interrupt_handler.got_signal:
+        control_variable = float(shared_value.value)
+        #freq = float(shared_freq.value)
         
-def tune_player(interrupt_handler2):
-    while not interrupt_handler2.got_signal:
-        sound_generate(mean_data)
-        print(mean_data)
+        sound_generator(control_variable, shared_freq)
+        
+        print(control_variable)
+
+# Function not complete, but the idea is to plot the sound wave real-time        
+def plotter(interrupt_handler, shared_freq):
+    while not interrupt_handler.got_signal:
+        freq = float(shared_freq.value)
+        
+        wave_plotter(freq)
+        
+        print(freq)
 
 
 if __name__ == "__main__":
