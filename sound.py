@@ -9,7 +9,7 @@ import pyaudio
 
 fs = 44100							# Sample frequency of sound wave
 freq = 0							# Sound frequency in Hz
-duration = 0.01		# Duration in s of audio output
+duration = 1		# Duration in s of audio output
 samples = np.arange(duration*fs) 	# Sampling numbers
 n = 100                         	# number of samples to plot
 timev = np.linspace(0, n/fs, n)		# X values array for plotwave = 0
@@ -18,7 +18,7 @@ fig = plt.figure()
 ax = fig.add_subplot(111)
 plt.style.use('fivethirtyeight')
 pya = pyaudio.PyAudio()
-stream = pya.open(format=pyaudio.paCustomFormat, channels=1, rate=fs, output=True)
+stream = pya.open(format=pyaudio.paInt16, channels=5, rate=fs, input=False, output=True)
 
 index = count()
 
@@ -77,7 +77,8 @@ def sound_generator(control_variable, freq_p):
     
     global wave
     #wave = 0.1*np.sin(2*np.pi*samples*freq_p.value/fs)
-    wave = 0.1*np.sin(2*np.pi*samples*control_variable/fs)+0.1*np.sin(2*np.pi*samples*(control_variable+1)/fs)+0.1*np.sin(2*np.pi*samples*(control_variable-1)/fs)
+    #wave = 0.1*np.sin(2*np.pi*samples*control_variable/fs)+0.1*np.sin(2*np.pi*samples*(control_variable+1)/fs)+0.1*np.sin(2*np.pi*samples*(control_variable-1)/fs)
+    wave = (5000*np.sin(2*np.pi*samples*control_variable/fs)).astype(np.int16)
     #generate_sample(wave)
     
     bytestream = wave.tobytes()
