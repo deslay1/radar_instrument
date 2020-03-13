@@ -7,6 +7,7 @@ import statistics
 import concurrent.futures
 import multiprocessing
 import threading
+import matplotlib.pyplot as plt
 import numpy as np
 from sound import *
 #from scipy.io.wavfile import write
@@ -34,7 +35,7 @@ def main():
 
     config = configs.EnvelopeServiceConfig()
     config.sensor = args.sensors
-    config.range_interval = [0.3, 0.7]
+    config.range_interval = [0.2, 1]
     config.update_rate = 50
 
     session_info = client.setup_session(config)
@@ -80,15 +81,15 @@ def main():
         shared_freq = manager.Value('d', 0)
         p1 = multiprocessing.Process(target=data_handler, args=(client, interrupt_handler, shared_value))
         p2 = multiprocessing.Process(target=tune_player, args=(interrupt_handler, shared_value, shared_freq))
-        p3 = multiprocessing.Process(target=plotter, args=(interrupt_handler, shared_freq))
+        #p3 = multiprocessing.Process(target=plotter, args=(interrupt_handler, shared_freq))
         p1.start()
         p2.start()
-        p3.start()
+        #p3.start()
         
         # Wait for processes to terminate before moving on
         p1.join()
         p2.join()
-        p3.join()
+        #p3.join()
 
     print("Disconnecting...")
     client.disconnect()
@@ -96,10 +97,23 @@ def main():
 # Function for data processing. The shared value is currently set to the
 # mean of the data feedback from the radar sensor. 
 def data_handler(client, interrupt_handler, shared_value):
+    #fig = plt.figure()
+    #ax = fig.add_subplot(111)
     while not interrupt_handler.got_signal:
+        #plt.cla()
         info, data = client.get_next()
         
-        shared_value.value = statistics.mean(data)
+        #shared_value.value = statistics.mean(data)
+        #shared_value.value = np.argmax(data)
+        #sort = data.argsort()[0:10][::-1]
+        ###sort = (-data).argsort()[:10]
+        ###print(sort)
+        ####shared_value.value = statistics.mean(sort)
+        shared_value.value= freqMapper(len(data),np.argmax(data))
+        '''x = np.linspace(0, 10, len(data))
+        plt.plot(x, data, label='Sensor 1')
+        plt.draw()
+        plt.pause(0.001)'''
         
         print(shared_value.value)
 
@@ -119,10 +133,16 @@ def plotter(interrupt_handler, shared_freq):
     while not interrupt_handler.got_signal:
         freq = float(shared_freq.value)
         
-        wave_plotter(freq)
+       # wave_plotter(freq)
         
         print(freq)
 
+def freqMapper(arrayLength,currentIndex):
+    mini = 500
+    maxi = 2000
+    fre = currentIndex*(maxi-mini)/arrayLength
+    
+    return fre
 
 if __name__ == "__main__":
     main()
