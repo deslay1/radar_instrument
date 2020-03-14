@@ -78,9 +78,9 @@ def main():
     # so that the threads are both stopped when a user hits Ctrl-C. 
     with multiprocessing.Manager() as manager:
         shared_value = manager.Value('d', 0)   # Shared value between processes
-        shared_freq = manager.Value('d', 0)
-        p1 = multiprocessing.Process(target=data_handler, args=(client, interrupt_handler, shared_value))
-        p2 = multiprocessing.Process(target=tune_player, args=(interrupt_handler, shared_value, shared_freq))
+        shared_amp = manager.Value('d', 0)
+        p1 = multiprocessing.Process(target=data_handler, args=(client, interrupt_handler, shared_value, shared_amp))
+        p2 = multiprocessing.Process(target=tune_player, args=(interrupt_handler, shared_value, shared_amp))
         #p3 = multiprocessing.Process(target=plotter, args=(interrupt_handler, shared_freq))
         p1.start()
         p2.start()
@@ -96,37 +96,35 @@ def main():
 
 # Function for data processing. The shared value is currently set to the
 # mean of the data feedback from the radar sensor. 
-def data_handler(client, interrupt_handler, shared_value):
-    #fig = plt.figure()
-    #ax = fig.add_subplot(111)
+def data_handler(client, interrupt_handler, shared_value, shared_amp):
+
     while not interrupt_handler.got_signal:
-        #plt.cla()
+      
         info, data = client.get_next()
-        
+        #print(data)
         #shared_value.value = statistics.mean(data)
         #shared_value.value = np.argmax(data)
         #sort = data.argsort()[0:10][::-1]
         ###sort = (-data).argsort()[:10]
         ###print(sort)
         ####shared_value.value = statistics.mean(sort)
-        shared_value.value= freqMapper(len(data),np.argmax(data))
-        '''x = np.linspace(0, 10, len(data))
-        plt.plot(x, data, label='Sensor 1')
-        plt.draw()
-        plt.pause(0.001)'''
-        
-        print(shared_value.value)
+        shared_value.value= freqMapper(len(data[0]),np.argmax(data[0]))
+        #print(max(data[1]))
+        if max(data[1])>150:
+            shared_amp.value = sound_amp(np.argmax(data[1]))
+        #print(shared_amp.value )
+    
+        #print("datahandler: {}".format(shared_value.value))
 
 # Function for playing different tunes according to how far away our
 # obstacle is from the sensor. Sound_generate() is called from sound.py
-def tune_player(interrupt_handler, shared_value, shared_freq):
+def tune_player(interrupt_handler, shared_value, shared_amp):
     while not interrupt_handler.got_signal:
         control_variable = float(shared_value.value)
-        #freq = float(shared_freq.value)
         
-        sound_generator(control_variable, shared_freq)
+        sound_generator(control_variable, float(abs(shared_amp.value)))
         
-        print(control_variable)
+        #print(control_variable)
 
 # Function not complete, but the idea is to plot the sound wave real-time        
 def plotter(interrupt_handler, shared_freq):
@@ -135,14 +133,23 @@ def plotter(interrupt_handler, shared_freq):
         
        # wave_plotter(freq)
         
-        print(freq)
+        #print(freq)
 
+# A frequency mapper function that returns a frequency for sound generation
 def freqMapper(arrayLength,currentIndex):
-    mini = 500
-    maxi = 2000
-    fre = currentIndex*(maxi-mini)/arrayLength
+    mini = 220
+    maxi = 1740
+    fre = (currentIndex*(maxi-mini)/arrayLength + mini)
     
     return fre
+
+# Returns amplitude to decide the sound output volume
+peak_prev = 0
+def sound_amp(peak):
+    global peak_prev
+    amp = peak-peak_prev
+    peak_prev = peak
+    return amp
 
 if __name__ == "__main__":
     main()

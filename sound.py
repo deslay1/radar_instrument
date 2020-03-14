@@ -9,16 +9,20 @@ import pyaudio
 
 fs = 44100							# Sample frequency of sound wave
 freq = 0							# Sound frequency in Hz
-duration = 1		# Duration in s of audio output
+duration = 0.1	                    # Duration in s of audio output
 samples = np.arange(duration*fs) 	# Sampling numbers
 n = 100                         	# number of samples to plot
 timev = np.linspace(0, n/fs, n)		# X values array for plotwave = 0
 wave = 0.1*np.sin(2*np.pi*samples*freq/fs)
+
+pya = pyaudio.PyAudio()
+stream = pya.open(format=pyaudio.paInt16, channels=1, rate=fs, input=False, output=True)
+f0=0
+phaseshift=0
+ampold=0
 fig = plt.figure() 
 ax = fig.add_subplot(111)
 plt.style.use('fivethirtyeight')
-pya = pyaudio.PyAudio()
-stream = pya.open(format=pyaudio.paInt16, channels=5, rate=fs, input=False, output=True)
 
 index = count()
 
@@ -30,6 +34,7 @@ plt.axhline(y=0, color='k')
 plt.legend(loc='upper left')
 
 plt.tight_layout()
+
 
 '''	
 def animate(i, freq_p):
@@ -55,46 +60,39 @@ def animate(i, freq_p):
      
         plt.plot(x, y, label='Sensor 1')'''
 
-def sound_generator(control_variable, freq_p):
+def sound_generator(control_variable, amp):
     global freq
-	
-    if control_variable > 500:
-        freq_p.value = 1740.0
-        freq = freq_p.value
-		
-    elif control_variable > 150 and control_variable <= 500:
-        freq_p.value = 880.0
-        freq = freq_p.value
-		
-    else:
-        freq_p.value = 440.0
-        freq = freq_p.value
-
-    
-    #print(freq_p.value)
-    
-    #print(freq)
-    
+    global f0
     global wave
-    #wave = 0.1*np.sin(2*np.pi*samples*freq_p.value/fs)
-    #wave = 0.1*np.sin(2*np.pi*samples*control_variable/fs)+0.1*np.sin(2*np.pi*samples*(control_variable+1)/fs)+0.1*np.sin(2*np.pi*samples*(control_variable-1)/fs)
-    wave = (5000*np.sin(2*np.pi*samples*control_variable/fs)).astype(np.int16)
-    #generate_sample(wave)
+    global phaseshift
+    global ampold
+    
+    if amp < 7:
+        amp = 0
+    elif amp > 300:
+        amp = 0
+    else:
+        amp = amp
+    #print(amp)
+    
+    amp = amp/10 +0.49*ampold
+    
+    freq =f0 + samples*(control_variable- f0)/(duration*fs)
+    
+    harm1 = 250*amp*np.sin((2*np.pi*samples*2*freq/fs)+phaseshift)
+    harm2 = 250*amp*np.sin((2*np.pi*samples*4*freq/fs)+phaseshift)
+    harm3 = 250*amp*np.sin((2*np.pi*samples*8*freq/fs)+phaseshift)
+    harm4 = 250*amp*np.sin((2*np.pi*samples*16*freq/fs)+phaseshift)
+    
+    
+    wave = ((500*amp*np.sin((2*np.pi*samples*freq/fs)+phaseshift))+harm1+harm2+harm3+harm4).astype("int16")
+    
+    phaseshift = 2*np.pi*(control_variable/fs)*(duration*fs) + phaseshift
+    f0=control_variable
     
     bytestream = wave.tobytes()
     stream.write(bytestream)
-    #time.sleep(duration)
-   
-    #ska försöka implementera callback mode, misstänker att jag kan döda bruset så. Återstårosé
-   
-    
-    
-    
-    
-    #sd.play(wave,fs)				# Audio production from sinusoid
-	
-    #time.sleep(duration)			# Wait out the audio output
-
+    ampold=amp
 def wave_plotter(freq_p):
     print("wave plotter")
 
@@ -134,20 +132,4 @@ def wave_plotter(freq_p):
     plt.pause(0.01)
     #plt.close()
 
-#### NÅGONTING JAG VILL LEKA MED SENARE!!!
-def generate_sample(ob):
-    print("* Generating sample...")
-    tone_out = array(ob, dtype=int16)
 
-    
-    print("* Previewing audio file...")
-
-    
-    
-    
-    stream.write(bytestream)
-    stream.stop_stream()
-    stream.close()
-
-    pya.terminate()
-    print("* Preview completed!")
