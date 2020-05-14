@@ -36,33 +36,8 @@ plt.legend(loc='upper left')
 
 plt.tight_layout()
 
-
-'''	
-def animate(i, freq_p):
-        it = next(index)
-
-        global wave
-        wave = 0.1*np.sin(2*np.pi*samples*freq_p/fs)
-        
-        x = timev
-        y = wave[0:n]
-        
-        plt.cla()
-
-        plt.title('Sine wave')
-        plt.xlabel('Time')
-        plt.ylabel('Amplitude = sin(time)')
-        ax.set_facecolor("lightgrey")
-        if it % 2 == 0:
-            t = plt.text(0.0015, 0.05, 'PERFECT', fontsize=15)
-        else:
-            t = plt.text(0.0015, 0.05, 'Very Close', fontsize=15)
-        t.set_bbox(dict(facecolor='red', alpha=0.5, edgecolor='red', boxstyle='square,pad=0.5'))
-     
-        plt.plot(x, y, label='Sensor 1')'''
         
 down = True
-up = False
 
 def sound_generator(control_variable, amp):
     global freq
@@ -74,35 +49,32 @@ def sound_generator(control_variable, amp):
     
     freq_wave = control_variable
     
-    skillnad = amp - ampold
-    
-    '''if amp < 30:
-        amp = 0.5*ampold
-    elif amp > 400:
-        amp = 0.5*ampold
-    else:
-        amp = 10*amp + 0.8*ampold'''
-    
     global down
-    global up
-    #print(amp)
     
     if (amp > 20 and amp < 500) and down:
         down = False
     elif (amp < -20 and amp > -500) and not down:
         down = True
-        amp = 1000 + 0.8*ampold
+        attack = np.arange(fs/10)/(fs/10)
+        decay = np.arange(1, 0.95, 1/(fs/10))
+        sustain = np.arange(0.95, 0.6, 1/(fs*0.6))
+        release = np.arange(0.6, 0, 1/(fs*0.2))
+        #amp = 1000 + 0.8*ampold
+        amp_vec = 3000*np.concatenate([attack,decay,sustain,release])[2:fs-1] +0.8*ampold
+        print(amp_vec.size)
         freq =f0 + samples*(control_variable- f0)/(duration*fs)
         freq = control_variable
         
-        harm1 = amp*np.sin((2*np.pi*samples*2*freq/fs)+phaseshift)
-        harm2 = amp*np.sin((2*np.pi*samples*4*freq/fs)+phaseshift)
-        harm3 = amp*np.sin((2*np.pi*samples*8*freq/fs)+phaseshift)
-        harm4 = amp*np.sin((2*np.pi*samples*16*freq/fs)+phaseshift)
-        
         wave_samples_minus_last = (2*np.pi*samples*freq/fs)
-        wave = ((2*amp*np.sin(wave_samples_minus_last[0:wave_samples_minus_last.size-2]+phaseshift))+harm1[0:wave_samples_minus_last.size-2]+harm2[0:wave_samples_minus_last.size-2]+harm3[0:wave_samples_minus_last.size-2]+harm4[0:wave_samples_minus_last.size-2]).astype("int16")
+        harm1 = amp_vec*np.sin((2*np.pi*samples*2*freq/fs)+phaseshift)[0:wave_samples_minus_last.size-2]
+        #harm2 = amp_vec*np.sin((2*np.pi*samples*4*freq/fs)+phaseshift)[0:wave_samples_minus_last.size-2]
+        #harm3 = amp_vec*np.sin((2*np.pi*samples*8*freq/fs)+phaseshift)[0:wave_samples_minus_last.size-2]
+        harm4 = amp_vec*np.sin((2*np.pi*samples*16*freq/fs)+phaseshift)[0:wave_samples_minus_last.size-2]
+        main = (2*amp_vec*np.sin(wave_samples_minus_last[0:wave_samples_minus_last.size-2]+phaseshift))
         
+        
+        wave = (main).astype("int16")
+        print(wave.size)
         phaseshift = 2*np.pi*(control_variable/fs)*(duration*fs) + phaseshift
         f0=control_variable
         
@@ -113,9 +85,6 @@ def sound_generator(control_variable, amp):
         amp = 0
          
         
-    #print(amp)
-    
-    #amp = 2500
     
 
 def wave_plotter(freq_p):
@@ -159,4 +128,26 @@ def wave_plotter(freq_p):
     plt.pause(0.01)
     #plt.close()
 
+'''	
+def animate(i, freq_p):
+        it = next(index)
 
+        global wave
+        wave = 0.1*np.sin(2*np.pi*samples*freq_p/fs)
+        
+        x = timev
+        y = wave[0:n]
+        
+        plt.cla()
+
+        plt.title('Sine wave')
+        plt.xlabel('Time')
+        plt.ylabel('Amplitude = sin(time)')
+        ax.set_facecolor("lightgrey")
+        if it % 2 == 0:
+            t = plt.text(0.0015, 0.05, 'PERFECT', fontsize=15)
+        else:
+            t = plt.text(0.0015, 0.05, 'Very Close', fontsize=15)
+        t.set_bbox(dict(facecolor='red', alpha=0.5, edgecolor='red', boxstyle='square,pad=0.5'))
+     
+        plt.plot(x, y, label='Sensor 1')'''

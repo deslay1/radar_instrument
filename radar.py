@@ -103,23 +103,16 @@ def data_handler(client, interrupt_handler, shared_value, shared_amp):
     while not interrupt_handler.got_signal:
       
         info, data = client.get_next()
-        #print(data)
-        #shared_value.value = statistics.mean(data)
-        #shared_value.value = np.argmax(data)
-        #sort = data.argsort()[0:10][::-1]
-        ###sort = (-data).argsort()[:10]
-        ###print(sort)
-        ####shared_value.value = statistics.mean(sort)
+        
         shared_value.value= freqMapper(len(data[0]),np.argmax(data[0]))
-        #print(max(data[1]))
+        
         global peak_prev
-        print(np.argmax(data[1]))
+        
         if max(data[1])>150:
             shared_amp.value = np.argmax(data[1])-peak_prev
-        #print(shared_amp.value )
+
         peak_prev=np.argmax(data[1])
     
-        #print("datahandler: {}".format(shared_value.value))
 
 # Function for playing different tunes according to how far away our
 # obstacle is from the sensor. Sound_generate() is called from sound.py
@@ -128,16 +121,14 @@ def tune_player(interrupt_handler, shared_value, shared_amp):
         control_variable = float(shared_value.value)
         
         sound_generator(control_variable, float(shared_amp.value))
-        
-        #print(control_variable)
+
 
 # Function not complete, but the idea is to plot the sound wave real-time        
 def plotter(interrupt_handler, shared_value):
     while not interrupt_handler.got_signal:
         freq = float(shared_value.value)
         wave_plotter(freq)
-        
-        #print(freq)
+
 
 # A frequency mapper function that returns a frequency for sound generation
 def freqMapper(arrayLength,currentIndex):
@@ -192,84 +183,6 @@ def freqMapper(arrayLength,currentIndex):
     
     return fre
 
-    '''   
-    if fre > 1567.98:
-        fre = 1661.28
-        
-    elif fre > 1479.98:
-        fre = 1567.98
-        
-    elif fre > 1396.91:
-        fre = 1479.98
-    
-    elif fre > 1318.51:
-        fre = 1396.91
-    
-    elif fre > 1244.51:
-        fre = 1318.51
- 
-    elif fre > 1174.66:
-        fre = 1244.51
-    
-    elif fre > 1108.73:
-        fre = 1174.66
-    
-    elif fre > 1046.50:
-        fre = 1108.73
-    
-    elif fre > 987.77:
-        fre = 1046.50
-    
-    elif fre > 932.33:
-        fre = 987.77
-    
-    elif fre > 880.00:
-        fre = 932.33
-    
-    elif fre > 830.61:
-        fre = 880.00
-    
-    elif fre > 783.99:
-        fre = 830.61
-    
-    elif fre > 739.99:
-        fre = 783.99
-    
-    elif fre > 694.66:
-        fre = 739.99
-    
-    elif fre > 659.25:
-        fre = 694.66
-    
-    elif fre > 622.25:
-        fre = 659.25
-        
-    elif fre > 587.33:
-        fre = 622.25
-        
-    elif fre > 554.37:
-        fre = 587.33
-        
-    elif fre > 523.25:
-        fre = 554.37
-        
-    elif fre > 493.98:
-        fre = 523.25
-        
-    elif fre > 466.16:
-        fre = 493.98
-        
-    else:
-        fre = 440.0
-    ''' 
-        
-# Returns amplitude to decide the sound output volume
-#peak_prev = 0
-def sound_amp(peak):
-    global peak_prev
-    amp = peak-peak_prev
-    peak_prev = peak
-    return amp
 
 if __name__ == "__main__":
     main()
