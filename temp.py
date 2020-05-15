@@ -1,4 +1,4 @@
-import numpy as np
+""" import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
@@ -15,7 +15,7 @@ def data_gen():
     while cnt < 4408:
         cnt += 1
         t += 0.1
-        yield t, np.sin(2*np.pi*t)
+        yield t, np.sin(2*np.pi*t*440/44100)
 
 
 data_gen.t = 0
@@ -43,6 +43,50 @@ def run(data):
     return line,
 
 
-ani = animation.FuncAnimation(fig, run, data_gen, blit=True, interval=10,
+ani = animation.FuncAnimation(fig, run, data_gen, blit=True, interval=1,
                               repeat=False)
+plt.show()
+ """
+
+# BASIC
+
+"""
+   A simple example of an animated plot
+   """
+
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+import random
+fig, ax = plt.subplots()
+
+fs = 44100  						# Sample frequency of sound wave
+freq = 220.0                            # Sound frequency in Hz
+duration = 0.1	                    # Duration in s of audio output
+samples = np.arange(duration*fs)
+
+x = np.linspace(0, duration, 4408)        # x-array
+line, = ax.plot(x, np.sin(2*np.pi*samples*freq/fs)[1:4409])
+
+
+def freq_gen():
+    yield freq - 100
+
+
+def animate(i):
+    global freq
+    freq = freq + random.randint(-5, 1)
+    line.set_ydata(np.sin(2*np.pi*samples*freq/fs)[1:4409])  # update the data
+    return line,
+
+# Init only required for blitting to give a clean slate.
+
+
+def init():
+    line.set_ydata(np.ma.array(x, mask=True))
+    return line,
+
+
+ani = animation.FuncAnimation(fig, animate, np.arange(1, 200),
+                              interval=25, blit=True)
 plt.show()
