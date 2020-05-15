@@ -102,9 +102,8 @@ def wave_plotter(freq_p):
 	print("wave plotter")
 
 	print(freq_p)
-
-	ani = FuncAnimation(plt.gcf(), animate, fargs=(freq_p,), interval=1000)
-
-	plt.show()
-
+	
+	while True is True:
+		ani = FuncAnimation(plt.gcf(), animate, repeat=False, fargs=(freq_p,), interval=1000)
+		plt.show()
 

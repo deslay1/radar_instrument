@@ -82,6 +82,7 @@ def main():
         p1 = multiprocessing.Process(target=data_handler, args=(client, interrupt_handler, shared_value))
         p2 = multiprocessing.Process(target=tune_player, args=(interrupt_handler, shared_value, shared_freq))
         p3 = multiprocessing.Process(target=plotter, args=(interrupt_handler, shared_freq))
+        
         p1.start()
         p2.start()
         p3.start()
