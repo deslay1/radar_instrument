@@ -14,11 +14,12 @@ samples = np.arange(duration*fs) 	# Sampling numbers
 n = 4410                         	# number of samples to plot
 timev = np.linspace(0, n/fs, n)		# X values array for plotwave = 0
 wave = 0.1*np.sin(2*np.pi*samples*freq/fs)
-
+mem=np.ones(50)
+old = wave
 pya = pyaudio.PyAudio()
 
-stream = pya.open(format=pyaudio.paInt16, channels=1,
-                  rate=fs, input=False, output=True)
+stream = pya.open(format=pyaudio.paInt16, channels=1, rate=fs, input=False, output=True)
+
 f0 = 0
 phaseshift = 0
 ampold = 0
@@ -39,23 +40,35 @@ plt.tight_layout()
 
 
 down = True
+wave_to_plot = np.zeros(100)
 
-
-def sound_generator(control_variable, amp):
+def sound_generator(control_variable, amp, shared_wave):
     global freq
     global freq_wave
     global f0
     global wave
     global phaseshift
     global ampold
-
+    global mem
+    global old
+    global wave_to_plot
+  
+   
     freq_wave = control_variable
-
+    mem= mem[1:mem.size]
+    mem=np.append(mem,amp)
+     
     global down
-
-    if (amp > 20 and amp < 500) and down:
+    dx=np.argmin(mem)-np.argmax(mem)
+    if dx != 0:
+        amp = (np.min(mem)-np.max(mem))/dx
+    else:
+        amp = 0
+    #print(amp)
+    if (amp > 3 and amp < 10) and down:
         down = False
-    elif (amp < -20 and amp > -500) and not down:
+        
+    elif (amp < -5 and amp > -10) and not down:
         down = True
         attack = np.arange(fs/10)/(fs/10)
         decay = np.arange(1, 0.95, 1/(fs/10))
@@ -64,31 +77,39 @@ def sound_generator(control_variable, amp):
         #amp = 1000 + 0.8*ampold
         amp_vec = 3000 * \
             np.concatenate([attack, decay, sustain, release])[
-                2:fs-1] + 0.8*ampold
-        print(amp_vec.size)
+                2:fs-1] 
         freq = f0 + samples*(control_variable - f0)/(duration*fs)
         freq = control_variable
 
         wave_samples_minus_last = (2*np.pi*samples*freq/fs)
-        harm1 = amp_vec*np.sin((2*np.pi*samples*2*freq/fs) +
-                               phaseshift)[0:wave_samples_minus_last.size-2]
+        harm1 = amp_vec*np.sin((2*np.pi*samples*2*freq/fs) +phaseshift)[0:wave_samples_minus_last.size-2]
         #harm2 = amp_vec*np.sin((2*np.pi*samples*4*freq/fs)+phaseshift)[0:wave_samples_minus_last.size-2]
         #harm3 = amp_vec*np.sin((2*np.pi*samples*8*freq/fs)+phaseshift)[0:wave_samples_minus_last.size-2]
-        harm4 = amp_vec*np.sin((2*np.pi*samples*16*freq/fs) +
-                               phaseshift)[0:wave_samples_minus_last.size-2]
+        harm4 = amp_vec*np.sin((2*np.pi*samples*16*freq/fs) +phaseshift)[0:wave_samples_minus_last.size-2]
         main = (
             2*amp_vec*np.sin(wave_samples_minus_last[0:wave_samples_minus_last.size-2]+phaseshift))
-
+        
+        wave_to_plot = np.sin(wave_samples_minus_last[0:wave_samples_minus_last.size-2]+phaseshift)[0:100]
+        
         wave = (main).astype("int16")
-        print(wave.size)
+        old= main
         phaseshift = 2*np.pi*(control_variable/fs)*(duration*fs) + phaseshift
         f0 = control_variable
+        
+        #return main[:]
+        #print(shared_wave)
 
         bytestream = wave.tobytes()
         stream.write(bytestream)
-        ampold = amp
+      
     else:
         amp = 0
+     
+    return wave_to_plot
+        
+        
+        
+        
 
 
 def wave_plotter(freq_p):

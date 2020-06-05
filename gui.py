@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import random
 from itertools import count
+import radar
 
 root = Tk()
 root.title("Radar Instrument GUI")
@@ -12,8 +13,6 @@ root.title("Radar Instrument GUI")
 
 frame = LabelFrame(root, text="Graph Container", padx=50, pady=50)
 frame.grid(row=2, column=2, padx=10, pady=10)
-#frame2 = LabelFrame(root, text="Graph Container", padx=50, pady=50)
-#frame2.grid(row=3, column=3, padx=10, pady=10)
 
 plt.style.use('fivethirtyeight')
 
@@ -27,7 +26,6 @@ samples = np.arange(duration*fs)
 
 def animate(i):
     # set x and y instead of appending them for the instrument
-    # call main from radar.py in a p3 processor and pass in shared wave_vec,
     # the x_vec will be a linspace created here from points 1 to 4408
     # Add After=graphical.target in the unit section of the systemd file!
     # sudo cp <service file location> <destination direction /lib/systemd/system/>
@@ -38,17 +36,19 @@ def animate(i):
     x_vals = [a + 4408 for a in x_vals]
     global freq
     freq = freq + random.randint(-50, 50)
-    y_wave = np.sin(2*np.pi*samples*freq/fs)[0:4408]
+    #y_wave = np.sin(2*np.pi*samples*freq/fs)[0:4408]
     plt.plot(x_vals, y_wave)
 
 
 def graph():
-    # house_prices = np.random.normal(200000, 25000, 5000)
-    # plt.hist(house_prices)
-    ani = FuncAnimation(plt.gcf(), animate, np.arange(
-        1, 200), interval=100)
+    ani = FuncAnimation(plt.gcf(), animate, repeat=False, interval=100)
     plt.tight_layout()
     plt.show()
+    
+def updateWave(interrupt_handler, shared_wave):
+    global y_wave
+    while not interrupt_handler.got_signal: 
+        y_wave = shared_wave
 
 
 def printme():
@@ -82,9 +82,9 @@ def selected(value):
     myLabel.grid(row=1, column=3)
 
 
-def main(wave):
-    global y_wave
-    y_wave = wave
+def main(shared_wave):
+    #global y_wave
+    #y_wave = wave[:]
 
     button = Button(frame, text="Open Graph", relief='flat',
                     fg="green", command=graph)
@@ -108,9 +108,9 @@ def main(wave):
 
     menuButton = Button(frame, text="show menu item",
                         command=show).grid(row=2, column=1)
-
     root.mainloop()
-
+        
 
 if __name__ == "__main__":
+    
     main()
