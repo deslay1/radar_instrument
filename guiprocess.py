@@ -24,7 +24,6 @@ class PGProcess:
         self._process.start()
 
     def put_data(self, data):
-        print(self._process.exitcode)
         if self._exit_event.is_set() or self._process.exitcode is not None:
             self.close()
             raise PGProccessDiedException
@@ -66,8 +65,6 @@ def pg_process_program(q, exit_event, updater, max_freq):
         data_time = time()
 
         if data is not None:
-            #print("stuck here2")
-            print(data)
             updater.update(data) # here is where we actually update?
 
         if max_freq and data is not None:
@@ -103,11 +100,10 @@ class ExamplePGUpdater:
     def setup(self):
         # here setup the figures and animation, read from attributes
         # x and y
-        #plt.style.use('fivethirtyeight')
+        plt.style.use('fivethirtyeight')
         #ani = FuncAnimation(plt.gcf(), self.animate, interval=100)
         #plt.tight_layout()
         #plt.show()
-        print(self.yc)
 
     def update(self, data):
         x, y = data
@@ -125,7 +121,7 @@ class ExamplePGUpdater:
 
 class PGProccessDiedException(Exception):
     pass
-
+'''
 def main(interrupt_handler, shared_wave):
     import numpy as np
 
@@ -155,4 +151,4 @@ def main(interrupt_handler, shared_wave):
 # ideally this part will be put in radar.py when this thing works.
 #if __name__ == "__main__":
     #main(interrupt_handler, shared_wave)
-    
+    '''

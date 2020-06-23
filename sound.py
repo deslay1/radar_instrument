@@ -1,117 +1,116 @@
 import sounddevice as sd
 import numpy as np
-import matplotlib.pyplot as plt
 import time
-from matplotlib.animation import FuncAnimation
-from itertools import count
 import pyaudio
 
 
 fs = 44100  						# Sample frequency of sound wave
 freq = 0                            # Sound frequency in Hz
-duration = 0.1	                    # Duration in s of audio output
+duration = 0.1                      # Duration in s of audio output
 samples = np.arange(duration*fs) 	# Sampling numbers
-n = 4410                         	# number of samples to plot
-timev = np.linspace(0, n/fs, n)		# X values array for plotwave = 0
-wave = 0.1*np.sin(2*np.pi*samples*freq/fs)
-mem=np.ones(50)
-old = wave
+
+mem=np.ones(10)
+
 pya = pyaudio.PyAudio()
 
 stream = pya.open(format=pyaudio.paInt16, channels=1, rate=fs, input=False, output=True)
 
+attack = np.arange(fs*duration*0.1)/(fs*duration*0.1)
+decay = np.linspace(1, 0.95, int((fs*duration*0.1)))
+sustain = np.linspace(0.95, 0.6, int((fs*duration*0.6)))
+release = np.linspace(0.6, 0, int((fs*duration*0.2)))
+amp_vec = 3000 * np.concatenate([attack, decay, sustain, release])
+
 f0 = 0
 phaseshift = 0
-ampold = 0
-fig = plt.figure()
-ax = fig.add_subplot(111)
-plt.style.use('fivethirtyeight')
-
-index = count()
-
-x = []
-y = []
-
-plt.grid(True, which='both')
-plt.axhline(y=0, color='k')
-plt.legend(loc='upper left')
-
-plt.tight_layout()
-
 
 down = True
-wave_to_plot = np.zeros(100)
 
-def sound_generator(control_variable, amp, shared_wave):
+wave = np.zeros(len(samples))
+old = wave
+
+def sound_generator(control_variable, dis):
     global freq
-    global freq_wave
     global f0
     global wave
     global phaseshift
     global ampold
     global mem
     global old
-    global wave_to_plot
-  
+    global retwave
    
-    freq_wave = control_variable
+    freq = control_variable
+   
     mem= mem[1:mem.size]
-    mem=np.append(mem,amp)
-     
-    global down
-    dx=np.argmin(mem)-np.argmax(mem)
-    if dx != 0:
-        amp = (np.min(mem)-np.max(mem))/dx
-    else:
-        amp = 0
+    mem=np.append(mem,dis)
+    
+    amp=0
+    for i in range(0,mem.size-2):
+        amp=amp+mem[i+1]-mem[i]
+    amp=0.1*amp
+  
     #print(amp)
-    if (amp > 3 and amp < 10) and down:
-        down = False
+    global down
         
-    elif (amp < -5 and amp > -10) and not down:
+    if (amp > 3 and amp < 60) and down:
+        down = False
+
+    elif (amp < -2 and amp > -20) and not down:
         down = True
-        attack = np.arange(fs/10)/(fs/10)
-        decay = np.arange(1, 0.95, 1/(fs/10))
-        sustain = np.arange(0.95, 0.6, 1/(fs*0.6))
-        release = np.arange(0.6, 0, 1/(fs*0.2))
-        #amp = 1000 + 0.8*ampold
-        amp_vec = 3000 * \
-            np.concatenate([attack, decay, sustain, release])[
-                2:fs-1] 
-        freq = f0 + samples*(control_variable - f0)/(duration*fs)
+        
+        #freq = f0 + samples*(control_variable - f0)/(duration*fs)
         freq = control_variable
 
         wave_samples_minus_last = (2*np.pi*samples*freq/fs)
-        harm1 = amp_vec*np.sin((2*np.pi*samples*2*freq/fs) +phaseshift)[0:wave_samples_minus_last.size-2]
-        #harm2 = amp_vec*np.sin((2*np.pi*samples*4*freq/fs)+phaseshift)[0:wave_samples_minus_last.size-2]
-        #harm3 = amp_vec*np.sin((2*np.pi*samples*8*freq/fs)+phaseshift)[0:wave_samples_minus_last.size-2]
-        harm4 = amp_vec*np.sin((2*np.pi*samples*16*freq/fs) +phaseshift)[0:wave_samples_minus_last.size-2]
+        
+        harm1 = amp_vec*np.sin((2*np.pi*samples*4*freq/fs) +phaseshift)
+        harm2 = amp_vec*np.sin((2*np.pi*samples*8*freq/fs) +phaseshift)
+        harm3 = amp_vec*np.sin((2*np.pi*samples*0.2*freq/fs) +phaseshift)
+        harm4 = amp_vec*np.sin((2*np.pi*samples*0.6*freq/fs) +phaseshift)
+        
         main = (
-            2*amp_vec*np.sin(wave_samples_minus_last[0:wave_samples_minus_last.size-2]+phaseshift))
+            2*amp_vec*np.sin(wave_samples_minus_last+phaseshift)) + harm1 + harm2
         
-        wave_to_plot = np.sin(wave_samples_minus_last[0:wave_samples_minus_last.size-2]+phaseshift)[0:100]
         
-        wave = (main).astype("int16")
-        old= main
+        wave = main + 0.1*old
+        old= wave
+        
         phaseshift = 2*np.pi*(control_variable/fs)*(duration*fs) + phaseshift
         f0 = control_variable
         
         #return main[:]
-        #print(shared_wave)
-
-        bytestream = wave.tobytes()
-        stream.write(bytestream)
-      
+        
+        #wave = amp_vec*np.sin(2*np.pi*samples*freq/fs)   
+    
+        #return wave
     else:
-        amp = 0
-     
-    return wave_to_plot
+        if(max(wave) > 500):
+            wave=old
+            old=0.9*wave    
+            
+        else:
+            wave=np.ones(samples.size)
+            
+    #test = 3000*np.sin(2*np.pi*samples*440/fs)
+    return wave
+    
         
+def play_sound(output):
         
-        
-        
+        if output is None:
+            print("none")
+        else:
+            #print(output[:])
+          
+            '''y=np.arange(len(output))
+            for i in range (0,len(output)):
+                
+                y[i]=output[i]
+        y = output'''
+        bytestream = np.frombuffer(output.get_obj()).astype("int16").tobytes()
+        stream.write(bytestream)
 
-
+'''
 def wave_plotter(freq_p):
     print("wave plotter")
 
@@ -131,7 +130,7 @@ def wave_plotter(freq_p):
     plt.ylabel('Amplitude = sin(time)')
     ax.set_facecolor("lightgrey")
 
-    '''
+    ##############################
     if freq_p == 1740.0:
         t = plt.text(0.0015, 0.05, 'Far Away', fontsize=15)
         t.set_bbox(dict(facecolor='red', alpha=0.5, edgecolor='red', boxstyle='square,pad=0.5'))
@@ -143,7 +142,7 @@ def wave_plotter(freq_p):
     elif freq_p == 440.0:
         t = plt.text(0.0015, 0.05, 'Nothing detected', fontsize=15)
         t.set_bbox(dict(facecolor='yellow', alpha=0.5, edgecolor='red', boxstyle='square,pad=0.5'))
-    '''
+    ##############################
 
     plt.plot(x, y, label='Sensor 1')
 
@@ -151,28 +150,4 @@ def wave_plotter(freq_p):
     plt.draw()
     plt.pause(0.01)
     # plt.close()
-
-
-'''	
-def animate(i, freq_p):
-        it = next(index)
-
-        global wave
-        wave = 0.1*np.sin(2*np.pi*samples*freq_p/fs)
-        
-        x = timev
-        y = wave[0:n]
-        
-        plt.cla()
-
-        plt.title('Sine wave')
-        plt.xlabel('Time')
-        plt.ylabel('Amplitude = sin(time)')
-        ax.set_facecolor("lightgrey")
-        if it % 2 == 0:
-            t = plt.text(0.0015, 0.05, 'PERFECT', fontsize=15)
-        else:
-            t = plt.text(0.0015, 0.05, 'Very Close', fontsize=15)
-        t.set_bbox(dict(facecolor='red', alpha=0.5, edgecolor='red', boxstyle='square,pad=0.5'))
-     
-        plt.plot(x, y, label='Sensor 1')'''
+'''
