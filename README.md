@@ -1,4 +1,4 @@
-# Radar_instrument
+# Radar instrument
 
 This repository contains the necessary resources to build the radar instrument using a Raspberry Pi.
 
