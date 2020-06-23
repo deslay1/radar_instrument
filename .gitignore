@@ -133,6 +133,6 @@ dmypy.json
 *.png
 *.csv
 SweepImages/
-./guiprocess.py
-./gui.py
+guiprocess.py
+gui.py
 
