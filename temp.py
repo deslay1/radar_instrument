@@ -1,42 +1,28 @@
-# BASIC
-
-"""
-   A simple example of an animated plot
-   """
-
 import numpy as np
-#import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import random
 
-
 plt.style.use("fivethirtyeight")
 
 fig, axs = plt.subplots(2)
-        
-x = []
-y = []
-
-#x = np.linspace(0, duration, 4409)        # x-array
 
 data = np.loadtxt("data.csv", delimiter=",")
-data2 = np.loadtxt("data2.csv", delimiter=",")
-#x = np.arange(data[0].size)
-#line, = ax.plot(x, data[0])
+data_frequency = np.loadtxt("data2.csv", delimiter=",") 
 
 def main():
 
     def animate(i):
-        #data = pd.read_csv("data.csv")
+        
+        # Detection data subplot
         x = np.arange(data[i].size)
         y = data[i]
         
+        # Frequency subplot
         x2 = np.arange(10)
-        y2 = data2[i]*np.ones(10)
+        y2 = data_frequency[i]*np.ones(10)
         
-        plt.cla()
-        axs[0].clear()
+        axs[0].clear() # Clear previous detection data
         axs[0].plot(x, y, label="SENSOR DATA")
         axs[0].set_ylabel("Amplitude")
         axs[0].set_xlabel("Distance from sensor")
@@ -47,7 +33,8 @@ def main():
         axs[1].set_xticklabels([])
         axs[1].legend([f"{y2[0]} Hz"])
         
-        "plt.savefig(f"sweep{i}.png", bbox_inches='tight')
+        # Save image frames in current directory
+        #plt.savefig(f"sweep{i}.png", bbox_inches='tight')
         
         plt.tight_layout()
         
