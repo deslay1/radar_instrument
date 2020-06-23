@@ -1,4 +1,3 @@
-import sounddevice as sd
 import numpy as np
 import pyaudio
 
@@ -29,6 +28,7 @@ down = True
 wave = np.zeros(len(samples))
 old = wave
 
+ # Returns a sine wave optimized to play a good sound
 def sound_generator(control_variable, dis):
     global freq
     global f0
@@ -49,12 +49,13 @@ def sound_generator(control_variable, dis):
         amp=amp+mem[i+1]-mem[i]
     amp=0.1*amp
   
-    #print(amp)
     global down
-        
+    
+    # State: Up    
     if (amp > 3 and amp < 60) and down:
         down = False
 
+    # State: Down (generate sound wave)
     elif (amp < -2 and amp > -20) and not down:
         down = True
         
@@ -63,10 +64,9 @@ def sound_generator(control_variable, dis):
 
         wave_samples_minus_last = (2*np.pi*samples*freq/fs)
         
+        # additional sine waves to produce better sound
         harm1 = amp_vec*np.sin((2*np.pi*samples*4*freq/fs) +phaseshift)
         harm2 = amp_vec*np.sin((2*np.pi*samples*8*freq/fs) +phaseshift)
-        harm3 = amp_vec*np.sin((2*np.pi*samples*0.2*freq/fs) +phaseshift)
-        harm4 = amp_vec*np.sin((2*np.pi*samples*0.6*freq/fs) +phaseshift)
         
         main = (
             2*amp_vec*np.sin(wave_samples_minus_last+phaseshift)) + harm1 + harm2
@@ -80,6 +80,7 @@ def sound_generator(control_variable, dis):
  
 
     else:
+        
         if(max(wave) > 500):
             wave=old
             old=0.9*wave    
@@ -93,7 +94,8 @@ def sound_generator(control_variable, dis):
     
     return wave
     
-        
+
+# Plays sound from array output
 def play_sound(output):
         
         if output is None:

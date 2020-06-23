@@ -1,21 +1,11 @@
 from acconeer.exptool import configs, utils
 from acconeer.exptool.clients import SocketClient, SPIClient, UARTClient
-#from playsound import playsound
-import time
+
 import os
-import statistics
-import concurrent.futures
 import multiprocessing
-import threading
 import matplotlib.pyplot as plt
 import numpy as np
 from sound import *
-from time import sleep, time
-#import gui
-#import guiprocess
-#from scipy.io.wavfile import write
-#file = "/home/pi/Downloads/acconeer-python-exploration-master/audio/sound7.mp3"
-# os.system("omxplayer " + file)
 
 def main():
     
@@ -43,8 +33,8 @@ def main():
 
     config = configs.EnvelopeServiceConfig()
     config.sensor = args.sensors
-    config.range_interval = [0.2, 1]
-    config.update_rate = 50
+    config.range_interval = [0.2, 1] # Range configuration
+    config.update_rate = 50 # Data collection frequency
 
     session_info = client.setup_session(config)
     print("Session info:\n", session_info, "\n")
@@ -64,25 +54,11 @@ def main():
     interrupt_handler = utils.ExampleInterruptHandler()
     print("Press Ctrl-C to end session\n")
 
-    '''while not interrupt_handler.got_signal:
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-            print("HI 1")
-            f1 = executor.submit(runner, client)
-            f2 = executor.submit(tune_player)'''
 
-    '''  
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        t1 = executor.submit(data_handler, client, interrupt_handler)
-        t2 = executor.submit(tune_player, interrupt_handler)
-            
-        print(t1.result(), t2.result())
+    # Here we make use of multiprocessing to run the data collection, sound wave computation, and 
+    # audio output separately. the intrerrupt_handler is passed in
+    # so that the processes are stopped when a user hits Ctrl-C.
     
-    # Threads close after script terminates.
-    t1.join()
-    t2.join()'''
-    # Here we make use of multiprocessing to run the data collection and
-    # sound generation separately. the intrerrupt_handler is passed in
-    # so that the threads are both stopped when a user hits Ctrl-C.
     with multiprocessing.Manager() as manager:
         
         shared_value = manager.Value('d', 0)   # Shared value between processes
@@ -95,6 +71,7 @@ def main():
             interrupt_handler, shared_value, shared_amp, shared_wave))
         p3 = multiprocessing.Process(target=tune_play, args=(interrupt_handler, shared_wave))
         
+        # Start processes
         p1.start()
         p2.start()
         p3.start()
@@ -108,8 +85,10 @@ def main():
     client.disconnect()
 
 
-# Function for data processing. The shared value is currently set to the
-# mean of the data feedback from the radar sensor.
+# Function for data processing.
+# shared_value is updated according to a frequency mapping function.
+# shared_amp is updated according to the distance away from the sensor
+# used to decide when a note should be played
 peak_prev = 0
 
 def data_handler(client, interrupt_handler, shared_value, shared_amp):
@@ -126,8 +105,8 @@ def data_handler(client, interrupt_handler, shared_value, shared_amp):
             shared_amp.value = np.argmax(data[1])
 
 
-# Function for playing different tunes according to how far away our
-# obstacle is from the sensor. Sound_generate() is called from sound.py
+# Generates a sound wave out of a determined frequency 
+# sound_generator() is called from sound.py
 def tune_gen(interrupt_handler, shared_value, shared_amp, shared_wave):
         
     while not interrupt_handler.got_signal:
@@ -135,17 +114,16 @@ def tune_gen(interrupt_handler, shared_value, shared_amp, shared_wave):
         y= sound_generator(control_variable, float(shared_amp.value))
         shared_wave[:] = y[:]
         
-       
-# Function not complete, but the idea is to plot the sound wave real-time
-
-
-
+# Plays a sound wave through a connected audio outport using the
+# pyaudio library
 def tune_play(interrupt_handler, shared_wave):
         while not interrupt_handler.got_signal:
            
            play_sound(shared_wave)
 
-# A frequency mapper function that returns a frequency for sound generation
+# A mapper function that returns a frequency value depending on
+# currentIndex, which is the distance from the sensor responsible for
+# determining the frequency
 def freqMapper(arrayLength, currentIndex):
     mini = 440
     freN = 15
