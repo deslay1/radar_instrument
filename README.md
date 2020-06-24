@@ -17,6 +17,10 @@ It is important to first download and install some required dependencies. This c
 ```
 python3.6 -m pip install -U --user -r requirements.txt
 ```
+In addition to the above dependencies, the acconeer.exptool library needs to be installed, which can be done by running the following command after downloading and opening Acconeer's [Github Repository](https://github.com/acconeer/acconeer-python-exploration) in a terminal window:
+```
+python3.6 -m pip install -U --user .
+```
 
 To start playing the instrument, run the following command:
 ```
@@ -24,7 +28,7 @@ python3.6 radar.py -s localhost --sensor 1 2
 ```
 
 ## References
-Upon encountering any issues, we would like to suggest visiting Acconeer, the company responsible for the project's radar sensors and software development kit. More specifically, we suggest visiting their Github repository (https://github.com/acconeer/acconeer-python-exploration) that contains a lot of information, guides and examples about configuring their radar sensors. 
+Upon encountering any issues, we would like to suggest visiting Acconeer, the company responsible for the project's radar sensors and software development kit. More specifically, we suggest visiting their [Github Repository](https://github.com/acconeer/acconeer-python-exploration) that contains a lot of information, guides and examples about configuring their radar sensors. 
 
 
 
