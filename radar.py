@@ -126,55 +126,52 @@ def tune_play(interrupt_handler, shared_wave):
 # determining the frequency
 def freqMapper(arrayLength, currentIndex):
     mini = 440
-    freN = 15
+    freN = 14
     maxi = 1661.28
     #fre = (currentIndex*(maxi-mini)/arrayLength + mini)
     fre = currentIndex/arrayLength*freN
-   
-    if fre > 14:
-        fre = 1661.28
 
-    elif fre > 13:
-        fre = 1567.98
+    if fre > 13:
+        fre = 1567.98 # G6
 
     elif fre > 12:
-        fre = 1396.91
+        fre = 1396.91 # F6
 
     elif fre > 11:
-        fre = 1318.51
+        fre = 1318.51 # E6
 
     elif fre > 10:
-        fre = 1174.66
+        fre = 1174.66 # D6
 
     elif fre > 9:
-        fre = 1046.50
+        fre = 1046.50 # C6
 
     elif fre > 8:
-        fre = 987.77
+        fre = 987.77  # B5
 
     elif fre > 7:
-        fre = 880.00
+        fre = 880.00  # A5
 
     elif fre > 6:
-        fre = 783.99
+        fre = 783.99  # G5
 
     elif fre > 5:
-        fre = 698.46
+        fre = 698.46  # F5
 
     elif fre > 4:
-        fre = 659.25
+        fre = 659.25  # E5
 
     elif fre > 3:
-        fre = 587.33
+        fre = 587.33  # D5
 
     elif fre > 2:
-        fre = 523.25
+        fre = 523.25  # C5
 
     elif fre > 1:
-        fre = 493.98
+        fre = 493.98  # B4
 
     else:
-        fre = 440.0
+        fre = 440.0   # A4
     
     
     # another set of optional note configurations
