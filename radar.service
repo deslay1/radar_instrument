@@ -1,0 +1,14 @@
+[Unit]
+Description= Radar service
+After=syslog.target network.target sound.target rserver.service
+
+[Service]
+ExecStart = /home/pi/Python-3.6.10/python -u radar.py -s localhost --sensor 1 2
+WorkingDirectory=/home/pi/Desktop/radar_instrument
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+User=pi
+
+[Install]
+WantedBy=multi-user.target

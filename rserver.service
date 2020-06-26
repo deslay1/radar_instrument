@@ -1,0 +1,14 @@
+[Unit]
+Description= server service
+After=syslog.target network.target
+
+[Service]
+ExecStart = /home/pi/Desktop/radar_instrument/rpi_xc112/utils/acc_streaming_server_rpi_xc112_r2b_xr112_r2b_a111_r2c
+WorkingDirectory=/home/pi/Desktop/radar_instrument/rpi_xc112
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+User=pi
+
+[Install]
+WantedBy=multi-user.target
