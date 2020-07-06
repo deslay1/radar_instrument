@@ -8,11 +8,6 @@ import numpy as np
 from sound import *
 
 def main():
-    
-    duration=0.1
-    fs=44100
-    n=int(fs*duration)
-    
     args = utils.ExampleArgumentParser().parse_args()
     utils.config_logging(args)
 
@@ -61,9 +56,9 @@ def main():
     
     with multiprocessing.Manager() as manager:
         
-        shared_value = manager.Value('d', 0)   # Shared value between processes
-        shared_amp = manager.Value('d', 0)
-        shared_wave = multiprocessing.Array('d',n)
+        shared_value = manager.Value('d', 0)   # Shared variable to control the determined frequency.
+        shared_amp = manager.Value('d', 0)     # Shared variable to control when a sound should be played.
+        shared_wave = multiprocessing.Array('d', 4410)  # Shared Array
         
         p1 = multiprocessing.Process(target=data_handler, args=(
             client, interrupt_handler, shared_value, shared_amp))
@@ -89,26 +84,17 @@ def main():
 # shared_value is updated according to a frequency mapping function.
 # shared_amp is updated according to the distance away from the sensor
 # used to decide when a note should be played
-peak_prev = 0
-
 def data_handler(client, interrupt_handler, shared_value, shared_amp):
-    
     while not interrupt_handler.got_signal:
-
-        info, data = client.get_next()
-        
+        info, data = client.get_next()  
         shared_value.value = freqMapper(len(data[0]), np.argmax(data[0]))
-        
-        global peak_prev
-
         if np.max(data[1])>150:
             shared_amp.value = np.argmax(data[1])
 
 
 # Generates a sound wave out of a determined frequency 
 # sound_generator() is called from sound.py
-def tune_gen(interrupt_handler, shared_value, shared_amp, shared_wave):
-        
+def tune_gen(interrupt_handler, shared_value, shared_amp, shared_wave): 
     while not interrupt_handler.got_signal:
         control_variable = float(shared_value.value)
         y= sound_generator(control_variable, float(shared_amp.value))
@@ -117,9 +103,8 @@ def tune_gen(interrupt_handler, shared_value, shared_amp, shared_wave):
 # Plays a sound wave through a connected audio outport using the
 # pyaudio library
 def tune_play(interrupt_handler, shared_wave):
-        while not interrupt_handler.got_signal:
-           
-           play_sound(shared_wave)
+    while not interrupt_handler.got_signal:
+        play_sound(shared_wave)
 
 # A mapper function that returns a frequency value depending on
 # currentIndex, which is the distance from the sensor responsible for
@@ -222,10 +207,6 @@ def freqMapper(arrayLength, currentIndex):
 
     return fre
     
-    
-    
-    
-
-
+ 
 if __name__ == "__main__":
     main()
