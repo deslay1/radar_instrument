@@ -1,10 +1,10 @@
 # Radar instrument
 
-This repository contains the necessary resources to build the radar instrument using a Raspberry Pi.
-
-To download via command-line: ``` git clone https://www.github.com/deslay1/radar_instrument ```
+This repository contains the necessary resources to build the radar instrument using a Raspberry Pi. To download via command-line: ``` git clone https://www.github.com/deslay1/radar_instrument ```
 
 Instrument design can be found in stl_files_to_3d_print.zip.
+
+The step-by-step instructions can be found [here](https://www.osamaeld.com/static/media/Radar_Instrument_Step_By_Step.be790a39.pdf). The final submitted report for this contest can also be found [here](https://www.osamaeld.com/static/media/Radar_Instrument_Report.c7658993.pdf).
 
 ## Setting up the streaming server
 To start receiving detection data from connected radar sensors, a streaming server has to be set up. The server is inside the directory called **rpi_xc112** and to run it, enter the following command from the current directory in the terminal:
